@@ -69,8 +69,6 @@
 @synthesize selectionPoint, selectionIndicatorView, indicatorPosition;
 @synthesize leftEdgeView, rightEdgeView;
 @synthesize leftScrollEdgeView, rightScrollEdgeView, scrollEdgeViewPadding;
-@synthesize indicatorColor = _indicatorColor;
-@synthesize indicatorSize = _indicatorSize;
 
 #pragma mark - Init/Dealloc
 - (id)initWithFrame:(CGRect)frame {
@@ -272,20 +270,6 @@
 	}
 }
 
-- (void) setIndicatorColor:(UIColor *)indicatorColor
-{
-    _indicatorColor = indicatorColor;
-
-    [self drawPositionIndicator];
-}
-
-- (void) setIndicatorSize:(CGFloat)indicatorSize
-{
-    _indicatorSize = indicatorSize;
-
-    [self drawPositionIndicator];
-}
-
 - (void)setLeftEdgeView:(UIView *)leftView {
 	if (leftEdgeView != leftView) {
 		if (leftEdgeView) {
@@ -448,6 +432,8 @@
 		_scrollView.decelerationRate = 0.1; //UIScrollViewDecelerationRateNormal;
 		_scrollView.autoresizingMask = UIViewAutoresizingFlexibleHeight | UIViewAutoresizingFlexibleWidth;
 		_scrollView.autoresizesSubviews = YES;
+        _scrollView.backgroundColor = [UIColor clearColor];
+        _scrollView.opaque = YES;
 
 		UITapGestureRecognizer *tapRecognizer = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(scrollViewTapped:)];
 		[_scrollView addGestureRecognizer:tapRecognizer];
@@ -456,15 +442,22 @@
 	}
 }
 
-- (void)drawPositionIndicator {
-    if (self.selectionIndicatorView) {
-        [self drawPositionIndicatorView];
-    } else {
-        [self drawPositionIndicatorArrow];
-    }
+- (void) setBackgroundImageNamed:(NSString *)imageName
+{
+    UIImage *image = [UIImage imageNamed:imageName];
+    UIImageView *imageView = [[UIImageView alloc] initWithImage:image];
+    imageView.opaque = YES;
+
+    [self insertSubview:imageView atIndex:0];
+    _scrollView.backgroundColor = [UIColor clearColor];
+    _scrollView.opaque = YES;
 }
 
-- (void) drawPositionIndicatorArrow
+- (void)drawPositionIndicator {
+    [self drawPositionIndicatorView];
+}
+
+- (void) drawPositionIndicatorArrow:(CGFloat) arrowSize withColor:(UIColor *) color;
 {
     CGRect bounds = self.bounds;
     CGFloat top = CGRectGetMinY(bounds);
@@ -473,22 +466,23 @@
     CGFloat center = self.frame.size.width / 2;
     
     CAShapeLayer *shapeLayer = [CAShapeLayer new];
-    shapeLayer.strokeColor = self.indicatorColor.CGColor;
+    shapeLayer.strokeColor = color.CGColor;
     shapeLayer.lineWidth = 1;
-    shapeLayer.fillColor = self.indicatorColor.CGColor;
+    shapeLayer.fillColor = color.CGColor;
     
     UIBezierPath *shapePath = UIBezierPath.new;
     
     if (self.indicatorPosition == V8HorizontalPickerIndicatorBottom) {
-        [shapePath moveToPoint:CGPointMake(center + self.indicatorSize, bottom)];
-        [shapePath addLineToPoint:CGPointMake(center, bottom - self.indicatorSize)];
-        [shapePath addLineToPoint:CGPointMake(center - self.indicatorSize, bottom)];
+        [shapePath moveToPoint:CGPointMake(center + arrowSize, bottom)];
+        [shapePath addLineToPoint:CGPointMake(center, bottom - arrowSize)];
+        [shapePath addLineToPoint:CGPointMake(center - arrowSize, bottom)];
     } else {
-        [shapePath moveToPoint:CGPointMake(center + self.indicatorSize, top)];
-        [shapePath addLineToPoint:CGPointMake(center, top + self.indicatorSize)];
-        [shapePath addLineToPoint:CGPointMake(center - self.indicatorSize, top)];
+        [shapePath moveToPoint:CGPointMake(center + arrowSize, top)];
+        [shapePath addLineToPoint:CGPointMake(center, top + arrowSize)];
+        [shapePath addLineToPoint:CGPointMake(center - arrowSize, top)];
     }
 
+    shapeLayer.opaque = YES;
     shapeLayer.path = shapePath.CGPath;
 
     [self.layer addSublayer:shapeLayer];
@@ -524,7 +518,7 @@
 	V8HorizontalPickerLabel *elementLabel = [[V8HorizontalPickerLabel alloc] initWithFrame:labelFrame];
 
 	elementLabel.textAlignment   = NSTextAlignmentCenter;
-	elementLabel.backgroundColor = self.backgroundColor;
+	elementLabel.backgroundColor = [UIColor clearColor];
 	elementLabel.text            = title;
 	elementLabel.font            = self.elementFont;
 
@@ -534,6 +528,7 @@
 	// show selected status if this element is the selected one and is currently over selectionPoint
 	int currentIndex = [self nearestElementToCenter];
 	elementLabel.selectedElement = (currentSelectedIndex == index) && (currentIndex == currentSelectedIndex);
+    elementLabel.opaque = YES;
 
 	return elementLabel;
 }
