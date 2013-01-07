@@ -6,7 +6,7 @@
 //
 
 #import "V8HorizontalPickerView.h"
-
+#import <QuartzCore/QuartzCore.h>
 
 #pragma mark - Internal Method Interface
 @interface V8HorizontalPickerView () {
@@ -69,39 +69,54 @@
 @synthesize selectionPoint, selectionIndicatorView, indicatorPosition;
 @synthesize leftEdgeView, rightEdgeView;
 @synthesize leftScrollEdgeView, rightScrollEdgeView, scrollEdgeViewPadding;
+@synthesize indicatorColor = _indicatorColor;
+@synthesize indicatorSize = _indicatorSize;
 
 #pragma mark - Init/Dealloc
 - (id)initWithFrame:(CGRect)frame {
 	if ((self = [super initWithFrame:frame])) {
-		elementWidths = [NSMutableArray array];
-
-		[self addScrollView];
-
-		self.textColor   = [UIColor blackColor];
-		self.elementFont = [UIFont systemFontOfSize:12.0f];
-
-		currentSelectedIndex = -1; // nothing is selected yet
-
-		numberOfElements     = 0;
-		elementPadding       = 0;
-		dataHasBeenLoaded    = NO;
-		scrollSizeHasBeenSet = NO;
-		scrollingBasedOnUserInteraction = NO;
-
-		// default to the center
-		selectionPoint = CGPointMake(frame.size.width / 2, 0.0f);
-		indicatorPosition = V8HorizontalPickerIndicatorBottom;
-
-		firstVisibleElement = -1;
-		lastVisibleElement  = -1;
-
-		scrollEdgeViewPadding = 0.0f;
-
-		self.autoresizesSubviews = YES;
+        [self commonInit];
 	}
 	return self;
 }
 
+- (id) initWithCoder:(NSCoder *)aDecoder
+{
+    if (self = [super initWithCoder:aDecoder]) {
+        [self commonInit];
+    }
+    return self;
+}
+
+- (void) commonInit
+{
+    elementWidths = [NSMutableArray array];
+    
+    [self addScrollView];
+    
+    self.textColor   = [UIColor blackColor];
+    self.elementFont = [UIFont systemFontOfSize:12.0f];
+    
+//    currentSelectedIndex =  -1; // nothing is selected yet
+    currentSelectedIndex = 0;
+    
+    numberOfElements     = 0;
+    elementPadding       = 0;
+    dataHasBeenLoaded    = NO;
+    scrollSizeHasBeenSet = NO;
+    scrollingBasedOnUserInteraction = NO;
+    
+    // default to the center
+    selectionPoint = CGPointMake(160, 0.0f);
+    indicatorPosition = V8HorizontalPickerIndicatorBottom;
+    
+    firstVisibleElement = -1;
+    lastVisibleElement  = -1;
+    
+    scrollEdgeViewPadding = 0.0f;
+    
+    self.autoresizesSubviews = YES;
+}
 
 #pragma mark - LayoutSubViews
 - (void)layoutSubviews {
@@ -257,6 +272,20 @@
 	}
 }
 
+- (void) setIndicatorColor:(UIColor *)indicatorColor
+{
+    _indicatorColor = indicatorColor;
+
+    [self drawPositionIndicator];
+}
+
+- (void) setIndicatorSize:(CGFloat)indicatorSize
+{
+    _indicatorSize = indicatorSize;
+
+    [self drawPositionIndicator];
+}
+
 - (void)setLeftEdgeView:(UIView *)leftView {
 	if (leftEdgeView != leftView) {
 		if (leftEdgeView) {
@@ -401,7 +430,6 @@
 	scrollingBasedOnUserInteraction = NO;
 }
 
-
 #pragma mark - View Creation Methods (Internal Methods)
 - (void)addScrollView {
 	if (_scrollView == nil) {
@@ -429,7 +457,45 @@
 }
 
 - (void)drawPositionIndicator {
-	CGRect indicatorFrame = selectionIndicatorView.frame;
+    if (self.selectionIndicatorView) {
+        [self drawPositionIndicatorView];
+    } else {
+        [self drawPositionIndicatorArrow];
+    }
+}
+
+- (void) drawPositionIndicatorArrow
+{
+    CGRect bounds = self.bounds;
+    CGFloat top = CGRectGetMinY(bounds);
+    CGFloat bottom = CGRectGetMaxY(bounds);
+    
+    CGFloat center = self.frame.size.width / 2;
+    
+    CAShapeLayer *shapeLayer = [CAShapeLayer new];
+    shapeLayer.strokeColor = self.indicatorColor.CGColor;
+    shapeLayer.lineWidth = 1;
+    shapeLayer.fillColor = self.indicatorColor.CGColor;
+    
+    UIBezierPath *shapePath = UIBezierPath.new;
+    
+    if (self.indicatorPosition == V8HorizontalPickerIndicatorBottom) {
+        [shapePath moveToPoint:CGPointMake(center + self.indicatorSize, bottom)];
+        [shapePath addLineToPoint:CGPointMake(center, bottom - self.indicatorSize)];
+        [shapePath addLineToPoint:CGPointMake(center - self.indicatorSize, bottom)];
+    } else {
+        [shapePath moveToPoint:CGPointMake(center + self.indicatorSize, top)];
+        [shapePath addLineToPoint:CGPointMake(center, top + self.indicatorSize)];
+        [shapePath addLineToPoint:CGPointMake(center - self.indicatorSize, top)];
+    }
+
+    shapeLayer.path = shapePath.CGPath;
+
+    [self.layer addSublayer:shapeLayer];
+}
+
+- (void) drawPositionIndicatorView {
+    CGRect indicatorFrame = selectionIndicatorView.frame;
 	CGFloat x = self.selectionPoint.x - (indicatorFrame.size.width / 2);
 	CGFloat y;
 
@@ -457,7 +523,7 @@
 	CGRect labelFrame     = [self frameForElementAtIndex:index];
 	V8HorizontalPickerLabel *elementLabel = [[V8HorizontalPickerLabel alloc] initWithFrame:labelFrame];
 
-	elementLabel.textAlignment   = UITextAlignmentCenter;
+	elementLabel.textAlignment   = NSTextAlignmentCenter;
 	elementLabel.backgroundColor = self.backgroundColor;
 	elementLabel.text            = title;
 	elementLabel.font            = self.elementFont;
@@ -567,7 +633,7 @@
 		offset += [[elementWidths objectAtIndex:i] intValue];
 		offset += elementPadding;
 	}
-	return offset;
+    return offset;
 }
 
 // return the tag for an element at a given index
@@ -585,7 +651,6 @@
 	if (index >= [elementWidths count]) {
 		return 0;
 	}
-
 	NSInteger elementOffset = [self offsetForElementAtIndex:index];
 	NSInteger elementWidth  = [[elementWidths objectAtIndex:index] intValue] / 2;
 	return elementOffset + elementWidth;
@@ -596,7 +661,7 @@
 	CGFloat width = 0.0f;
 	if ([elementWidths count] > index) {
 		width = [[elementWidths objectAtIndex:index] intValue];
-	}
+    }
 	return CGRectMake([self offsetForElementAtIndex:index], 0.0f, width, self.frame.size.height);
 }
 
