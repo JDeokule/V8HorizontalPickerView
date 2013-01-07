@@ -37,6 +37,8 @@ typedef enum {
 @property (nonatomic, retain) UIView *selectionIndicatorView;
 
 @property (nonatomic, assign) V8HorizontalPickerIndicatorPosition indicatorPosition;
+@property (nonatomic, assign) UIColor *indicatorColor;
+@property (nonatomic, assign) CGFloat indicatorSize;
 
 // views to display on edges of picker (eg: gradients, etc)
 @property (nonatomic, retain) UIView *leftEdgeView;
