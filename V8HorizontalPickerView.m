@@ -363,7 +363,13 @@
 - (void)scrollToElement:(NSInteger)index animated:(BOOL)animate {
 	currentSelectedIndex = index;
 	int x = [self centerOfElementAtIndex:index] - selectionPoint.x;
-	[_scrollView setContentOffset:CGPointMake(x, 0) animated:animate];
+
+    [UIView animateWithDuration:.15
+                          delay:0
+                        options:UIViewAnimationOptionCurveEaseInOut|UIViewAnimationOptionAllowUserInteraction|UIViewAnimationOptionLayoutSubviews
+                     animations:^(void) {
+                         [_scrollView setContentOffset:CGPointMake(x,0) animated:NO];
+                     } completion:nil];
 
 	// notify delegate of the selected index
 	SEL delegateCall = @selector(horizontalPickerView:didSelectElementAtIndex:);
@@ -429,7 +435,6 @@
 		_scrollView.minimumZoomScale = 1.0; // setting min/max the same disables zooming
 		_scrollView.maximumZoomScale = 1.0;
 		_scrollView.contentInset = UIEdgeInsetsZero;
-		_scrollView.decelerationRate = 0.1; //UIScrollViewDecelerationRateNormal;
 		_scrollView.autoresizingMask = UIViewAutoresizingFlexibleHeight | UIViewAutoresizingFlexibleWidth;
 		_scrollView.autoresizesSubviews = YES;
         _scrollView.backgroundColor = [UIColor clearColor];
