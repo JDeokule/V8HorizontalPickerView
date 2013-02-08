@@ -69,6 +69,7 @@
 @synthesize selectionPoint, selectionIndicatorView, indicatorPosition;
 @synthesize leftEdgeView, rightEdgeView;
 @synthesize leftScrollEdgeView, rightScrollEdgeView, scrollEdgeViewPadding;
+@synthesize decelerationRate = _decelerationRate;
 
 #pragma mark - Init/Dealloc
 - (id)initWithFrame:(CGRect)frame {
@@ -114,6 +115,8 @@
     scrollEdgeViewPadding = 0.0f;
     
     self.autoresizesSubviews = YES;
+
+    self.decelerationRate = .15;
 }
 
 #pragma mark - LayoutSubViews
@@ -332,6 +335,12 @@
 	[super setFrame:newFrame];
 }
 
+- (void) setDecelerationRate:(CGFloat)decelerationRate
+{
+    _decelerationRate = decelerationRate;
+    _scrollView.decelerationRate = decelerationRate;
+}
+
 #pragma mark - Data Fetching Methods
 - (void)reloadData {
 	// remove all scrollview subviews and "recycle" them
@@ -439,6 +448,7 @@
 		_scrollView.autoresizesSubviews = YES;
         _scrollView.backgroundColor = [UIColor clearColor];
         _scrollView.opaque = YES;
+        _scrollView.decelerationRate = self.decelerationRate;
 
 		UITapGestureRecognizer *tapRecognizer = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(scrollViewTapped:)];
 		[_scrollView addGestureRecognizer:tapRecognizer];
